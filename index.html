@@ -81,8 +81,8 @@
         <div id="booking-form" class="hidden">
             <h2>Book a Training Bay</h2>
             <div class="form-group">
-                <label for="bay">Select Bay:</label>
-                <select id="bay">
+                <label for="bay">Select Bay(s):</label>
+                <select id="bay" multiple size="6">
                     <option value="1">Bay 1</option>
                     <option value="2">Bay 2</option>
                     <option value="3">Bay 3</option>
@@ -141,23 +141,29 @@
         }
 
         function book() {
-            const bay = document.getElementById('bay').value;
+            const bays = Array.from(document.getElementById('bay').selectedOptions).map(option => option.value);
             const date = document.getElementById('date').value;
             const time = document.getElementById('time').value;
             const email = localStorage.getItem('loggedInUser');
 
-            if (bay && date && time) {
+            if (bays.length && date && time) {
                 const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-                
-                const isBooked = bookings.some(booking => booking.bay === bay && booking.date === date && booking.time === time);
-                
-                if (isBooked) {
-                    alert(`Bay ${bay} is already booked on ${date} at ${time}`);
-                } else {
-                    bookings.push({ bay, date, time, email });
+                let allAvailable = true;
+                bays.forEach(bay => {
+                    const isBooked = bookings.some(booking => booking.bay === bay && booking.date === date && booking.time === time);
+                    if (isBooked) {
+                        allAvailable = false;
+                        alert(`Bay ${bay} is already booked on ${date} at ${time}`);
+                    }
+                });
+
+                if (allAvailable) {
+                    bays.forEach(bay => {
+                        bookings.push({ bay, date, time, email });
+                    });
                     localStorage.setItem('bookings', JSON.stringify(bookings));
-                    alert(`Bay ${bay} booked successfully on ${date} at ${time}`);
-                    sendEmailConfirmation(bay, date, time, email);
+                    alert(`Bays ${bays.join(', ')} booked successfully on ${date} at ${time}`);
+                    sendEmailConfirmation(bays, date, time, email);
                     loadUserBookings(email);
                 }
             } else {
@@ -165,8 +171,8 @@
             }
         }
 
-        function sendEmailConfirmation(bay, date, time, email) {
-            console.log(`Email sent to ${email}: Bay ${bay} booked on ${date} at ${time}`);
+        function sendEmailConfirmation(bays, date, time, email) {
+            console.log(`Email sent to ${email}: Bays ${bays.join(', ')} booked on ${date} at ${time}`);
         }
 
         function loadUserBookings(email) {

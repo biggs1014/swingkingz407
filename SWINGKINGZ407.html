@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swing Kingz Training Facility Booking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+        .form-group button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .form-group button:hover {
+            background-color: #444;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .dashboard {
+            text-align: left;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="SWINGK.jpg" alt="Swing Kingz Logo">
+        <h1>Swing Kingz Training Facility</h1>
+        <div id="login-form">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+            </div>
+            <div class="form-group">
+                <button onclick="login()">Login</button>
+            </div>
+        </div>
+
+        <div id="booking-form" class="hidden">
+            <h2>Book a Training Bay</h2>
+            <div class="form-group">
+                <label for="bay">Select Bay:</label>
+                <select id="bay">
+                    <option value="1">Bay 1</option>
+                    <option value="2">Bay 2</option>
+                    <option value="3">Bay 3</option>
+                    <option value="4">Bay 4</option>
+                    <option value="5">Bay 5</option>
+                    <option value="6">Bay 6</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Time:</label>
+                <input type="time" id="time" min="08:00" max="22:00" required>
+            </div>
+            <div class="form-group">
+                <button onclick="book()">Book</button>
+            </div>
+            <div class="form-group">
+                <button onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="dashboard" class="hidden">
+            <h2>Your Bookings</h2>
+            <div class="dashboard" id="dashboard-content"></div>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (email && password) {
+                if (password === 'dummyPassword') {
+                    localStorage.setItem('loggedInUser', email);
+                    document.getElementById('login-form').classList.add('hidden');
+                    document.getElementById('booking-form').classList.remove('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    alert('Logged in successfully');
+                    loadUserBookings(email);
+                } else {
+                    alert('Incorrect password');
+                }
+            } else {
+                alert('Please enter your email and password');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedInUser');
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('booking-form').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            alert('Logged out successfully');
+        }
+
+        function book() {
+            const bay = document.getElementById('bay').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const email = localStorage.getItem('loggedInUser');
+
+            if (bay && date && time) {
+                const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+                
+                const isBooked = bookings.some(booking => booking.bay === bay && booking.date === date && booking.time === time);
+                
+                if (isBooked) {
+                    alert(`Bay ${bay} is already booked on ${date} at ${time}`);
+                } else {
+                    bookings.push({ bay, date, time, email });
+                    localStorage.setItem('bookings', JSON.stringify(bookings));
+                    alert(`Bay ${bay} booked successfully on ${date} at ${time}`);
+                    sendEmailConfirmation(bay, date, time, email);
+                    loadUserBookings(email);
+                }
+            } else {
+                alert('Please fill in all fields');
+            }
+        }
+
+        function sendEmailConfirmation(bay, date, time, email) {
+            console.log(`Email sent to ${email}: Bay ${bay} booked on ${date} at ${time}`);
+        }
+
+        function loadUserBookings(email) {
+            const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+            const userBookings = bookings.filter(booking => booking.email === email);
+            const dashboardContent = document.getElementById('dashboard-content');
+            dashboardContent.innerHTML = '';
+
+            if (userBookings.length === 0) {
+                dashboardContent.innerHTML = '<p>No bookings yet.</p>';
+            } else {
+                userBookings.forEach(booking => {
+                    const bookingElement = document.createElement('div');
+                    bookingElement.innerHTML = `
+                        <p>Bay: ${booking.bay}</p>
+                        <p>Date: ${booking.date}</p>
+                        <p>Time: ${booking.time}</p>
+                        <hr>
+                    `;
+                    dashboardContent.appendChild(bookingElement);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
